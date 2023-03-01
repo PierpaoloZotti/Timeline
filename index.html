@@ -41,7 +41,25 @@
         }
 
         class Header extends React.Component{
+            constructor(props){
+                super(props);
+
+                this.state = {
+                    searchVisible: false
+                }
+            }
+            showSearch(){
+                this.setState({
+                    searchVisible: !this.state.searchVisible  //<- Toggle para mostrar ou ocultar a barrad de pesquisa
+                })
+            }
             render() {
+                //Classes para passar ao search input
+
+                let searchInputClasses = ['searchInput'];
+                if (this.state.searchVisible){
+                    searchInputClasses.push('Active');
+                }
                 return (
                     <div className="header">
 
@@ -56,10 +74,11 @@
                         </span>
                         <input
                             type="text"
-                            className="searchInput"
+                            className={searchInputClasses.join(' ')}
                             placeholder="Search..."
                         />
-                        <div className="fa fa-search searchIcon"></div>
+                        <div onClick={this.showSearch.bind(this)} className="fa fa-search searchIcon"></div>
+                        
                     </div>
                    )
             }
