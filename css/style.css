@@ -147,7 +147,9 @@
     width: 3px;
     background: #ebebeb;
   }
-  
+  .fa-refresh{
+    cursor:pointer ;
+  }
   .demo .notificationsFrame .content .item {
     position: relative;
     z-index: 2;

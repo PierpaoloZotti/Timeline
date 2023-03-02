@@ -16,6 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.min.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="https://unpkg.com/moment@2.24.0/min/moment.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.6/prop-types.min.js"></script>
     <script src="./data.js"></script>
 </head>
 <body>
@@ -54,12 +55,6 @@
                 })
             }
             render() {
-                //Classes para passar ao search input
-
-                let searchInputClasses = ['searchInput'];
-                if (this.state.searchVisible){
-                    searchInputClasses.push('active');
-                }
                 return (
                     <div className="header">
 
@@ -72,16 +67,21 @@
                         <span className="title">
                             {this.props.title}    
                         </span>
-                        <input
-                            type="text"
-                            className={searchInputClasses.join(' ')}
-                            placeholder="Search..."
+                        <SearchForm 
+                            searchVisible={this.state.searchVisible}
+                            onSubmit={this.props.onSearch}
                         />
-                        <div onClick={this.showSearch.bind(this)} className="fa fa-search searchIcon"></div>
-                        
+                        <div 
+                            onClick={this.showSearch.bind(this)} 
+                            className="fa fa-search searchIcon">
+                        </div>
                     </div>
                    )
             }
+        }
+
+        Header.propTypes={
+            onSearch: PropTypes.func
         }
 
         
@@ -90,7 +90,7 @@
                 super(props);
 
                 this.state = {
-                    activities : [],
+                    activities : data,
                     loading: false //<- Set Loading a falso
                 };
             }
@@ -120,14 +120,19 @@
                 const {loading, activities} = this.state;
 
                 return(
-                    <div className="content">
-                        <div className="line"></div>
+                    <div>
+                        <Header
+                            title="Github Activity"
+                        />
+                        <div className="content">
+                            <div className="line"></div>
 
-                        {/*Mostra mensagem de carregamento se carregando*/}
-                        {loading && <div>Loading</div>}
-                        {activities.map((activity)=>(
-                            <ActivityItem key={activity.id} activity={activity}/>
-                        ))}
+                            {/*Mostra mensagem de carregamento se carregando*/}
+                            {loading && <div>Loading</div>}
+                            {activities.map((activity)=>(
+                                <ActivityItem key={activity.id} activity={activity}/>
+                            ))}
+                        </div>
                     </div>
                 );
             }
@@ -160,6 +165,101 @@
             }
         }
 
+
+        class SearchForm extends React.Component {
+            constructor(props) {
+                super(props);
+
+                this.state = {
+                    searchText:''
+                }
+            }
+            updateSearchInput(e){
+                const val = e.target.value;
+                this.setState({
+                    searchText: val
+                });
+            }
+
+            submitForm(event){
+                event.preventDefault(); //Impede que a pagina seja recarregada por total
+                this.props.onSubmit(this.state.searchText); //Chama o callback com o valor da pesquisa
+            }
+
+            render(){
+                //Classes para passar ao search input
+                const {searchVisible} = this.props;
+                let searchClasses = ['searchInput'];
+                if (searchVisible) {
+                    searchClasses.push('active');
+                }
+                return (
+                    <form onSubmit={this.submitForm.bind(this)}>
+                        <input 
+                            type='search'
+                            value={this.state.searchText}
+                            className={searchClasses.join(" ")}
+                            placeholder="Search..."
+                            onChange={this.updateSearchInput.bind(this)}
+                        />
+                    </form>
+                );
+            }
+        }
+        SearchForm.propTypes = {
+                onSubmit: PropTypes.func.isRequired,
+                searchVisible: PropTypes.bool
+            };
+
+        SearchForm.defaultProps = {
+            onSubmit: () => {},
+            searchVisible: false
+        };
+
+        
+        class Panel extends React.Component{
+            constructor(props) {
+                super(props);
+
+                this.state = {
+                    activities: data,
+                };
+            }
+
+            handleSearch(val){
+                if (val === ""){
+                    this.setState({
+                        activities:data
+                    });
+                } else {
+                   const {activities} = this.state;
+                   const filtered = activities.filter(
+                    a => a.actor && a.actor.login.match(val)
+                   );
+                   this.setState({
+                    activities:filtered
+                   });
+                }
+            }
+            render(){
+                const {activities} = this.state;
+                return(
+                <div>
+                    <Header
+                        title="Github Activity"
+                        onSearch={this.handleSearch.bind(this)}
+                    />
+                    <div className="content">
+                        <div className="line"/>
+                        {activities.map(activity => (
+                            <ActivityItem key={activity.id} activity={activity} />
+                        ))}
+                    </div>
+                </div>
+                );
+            }
+        }
+
         class Container extends React.Component{
             constructor(props) {
                 super(props);
@@ -182,8 +282,6 @@
                 return(
                     <div className="notificationFrame">
                         <div className="panel">
-                            <Header title="Github activity" />
-                            
                             <Content 
                                 onComponentRefresh={this.onComponentRefresh.bind(this)}
                                 requestRefresh={refreshing}
@@ -202,7 +300,7 @@
 
         }
         var mount = document.querySelector('#app');
-        ReactDOM.render(<Container />, mount)
+        ReactDOM.render(<Panel />, mount)
     </script>
 
 </body>
